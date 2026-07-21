@@ -1,0 +1,647 @@
+/* ==========================================================================
+   Tokens
+   ========================================================================== */
+:root {
+  --ink:        #14132B;
+  --ink-2:      #1E1D3D;
+  --ink-3:      #2A2953;
+  --cream:      #FDF6EC;
+  --muted:      #A9A7C7;
+  --marigold:   #FFC145;
+  --coral:      #FF6F91;
+  --mint:       #6FE7CB;
+
+  --font-display: 'Fraunces', serif;
+  --font-body:    'Poppins', sans-serif;
+  --font-mono:    'Space Mono', monospace;
+
+  --radius: 18px;
+}
+
+* { box-sizing: border-box; }
+
+html { scroll-behavior: smooth; }
+
+body {
+  margin: 0;
+  background: var(--ink);
+  color: var(--cream);
+  font-family: var(--font-body);
+  font-weight: 300;
+  line-height: 1.6;
+  overflow-x: hidden;
+  position: relative;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * { animation-duration: 0.001ms !important; animation-iteration-count: 1 !important; transition-duration: 0.001ms !important; }
+}
+
+a { color: inherit; }
+
+::selection { background: var(--coral); color: var(--ink); }
+
+/* ==========================================================================
+   Confetti canvas (full-page, behind content)
+   ========================================================================== */
+#confetti-canvas {
+  position: fixed;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 5;
+}
+
+/* ==========================================================================
+   Balloons ambient background
+   ========================================================================== */
+.balloons {
+  position: fixed;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+  z-index: 0;
+}
+.balloon {
+  position: absolute;
+  bottom: -220px;
+  width: 46px;
+  height: 58px;
+  border-radius: 50% 50% 50% 50% / 58% 58% 42% 42%;
+  opacity: 0.35;
+  animation: float-up linear infinite;
+}
+.balloon::after {
+  content: "";
+  position: absolute;
+  bottom: -30px;
+  left: 50%;
+  width: 1px;
+  height: 30px;
+  background: rgba(253,246,236,0.25);
+}
+.b1 { left: 8%;  background: var(--coral);    animation-duration: 22s; animation-delay: 0s; }
+.b2 { left: 24%; background: var(--marigold); animation-duration: 28s; animation-delay: 4s; }
+.b3 { left: 52%; background: var(--mint);     animation-duration: 25s; animation-delay: 2s; }
+.b4 { left: 74%; background: var(--coral);    animation-duration: 30s; animation-delay: 7s; }
+.b5 { left: 90%; background: var(--marigold); animation-duration: 24s; animation-delay: 10s; }
+
+@keyframes float-up {
+  0%   { transform: translateY(0) rotate(-4deg); }
+  50%  { transform: translateY(-60vh) rotate(4deg); }
+  100% { transform: translateY(-130vh) rotate(-4deg); }
+}
+
+/* ==========================================================================
+   Header / ticket stub
+   ========================================================================== */
+.ticket-header {
+  position: relative;
+  z-index: 2;
+  padding: 64px 24px 40px;
+  text-align: center;
+}
+.ticket-header__inner { max-width: 720px; margin: 0 auto; }
+
+.ticket-eyebrow {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  letter-spacing: 0.35em;
+  color: var(--mint);
+  margin-bottom: 18px;
+}
+
+.ticket-title {
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: clamp(2.4rem, 6vw, 4.4rem);
+  line-height: 1.05;
+  margin: 0 0 16px;
+}
+.ticket-title span {
+  font-style: italic;
+  font-weight: 500;
+  color: var(--marigold);
+}
+
+.ticket-sub {
+  font-family: var(--font-mono);
+  font-size: 13px;
+  color: var(--muted);
+  margin-bottom: 24px;
+}
+
+.theme-toggle {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  background: transparent;
+  border: 1px solid rgba(253,246,236,0.25);
+  color: var(--cream);
+  padding: 9px 18px;
+  border-radius: 999px;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  transition: border-color 0.2s, background 0.2s;
+}
+.theme-toggle:hover { border-color: var(--marigold); }
+.theme-toggle__dot {
+  width: 8px; height: 8px; border-radius: 50%;
+  background: var(--marigold);
+  box-shadow: 0 0 8px var(--marigold);
+}
+body.lights-off .theme-toggle__dot { background: #555; box-shadow: none; }
+body.lights-off .marquee-bulbs span { animation-play-state: paused !important; opacity: 0.15 !important; }
+
+/* Marquee light strip used under header/footer */
+.marquee-strip {
+  height: 3px;
+  max-width: 640px;
+  margin: 0 auto;
+  background-image: radial-gradient(circle, var(--marigold) 2px, transparent 2.5px);
+  background-size: 22px 3px;
+  opacity: 0.6;
+}
+
+/* ==========================================================================
+   Flash messages
+   ========================================================================== */
+.flash-stack {
+  max-width: 640px;
+  margin: 0 auto 8px;
+  padding: 0 24px;
+  position: relative;
+  z-index: 2;
+}
+.flash {
+  font-family: var(--font-mono);
+  font-size: 13px;
+  padding: 10px 16px;
+  border-radius: 10px;
+  margin-bottom: 8px;
+  text-align: center;
+}
+.flash--success { background: rgba(111,231,203,0.15); color: var(--mint); border: 1px solid rgba(111,231,203,0.35); }
+.flash--error   { background: rgba(255,111,145,0.15); color: var(--coral); border: 1px solid rgba(255,111,145,0.35); }
+
+/* ==========================================================================
+   Stage: cake + marquee frame  (signature element)
+   ========================================================================== */
+.stage {
+  position: relative;
+  z-index: 2;
+  padding: 20px 24px 60px;
+  display: flex;
+  justify-content: center;
+}
+
+.marquee-frame {
+  position: relative;
+  width: 100%;
+  max-width: 620px;
+  border-radius: 24px;
+  padding: 10px;
+  background: linear-gradient(180deg, var(--ink-2), var(--ink));
+}
+
+.marquee-bulbs {
+  position: absolute;
+  inset: 0;
+  border-radius: 24px;
+  pointer-events: none;
+}
+.marquee-bulbs::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: 24px;
+  padding: 10px;
+  background-image:
+    radial-gradient(circle 3px, var(--marigold) 96%, transparent 100%);
+  background-repeat: repeat-x, repeat-x, repeat-y, repeat-y;
+  background-size: 26px 3px;
+  background-position: top left, bottom left, top left, top right;
+  -webkit-mask:
+    linear-gradient(#000 0 0) top left / 100% 3px no-repeat,
+    linear-gradient(#000 0 0) bottom left / 100% 3px no-repeat,
+    linear-gradient(#000 0 0) top left / 3px 100% no-repeat,
+    linear-gradient(#000 0 0) top right / 3px 100% no-repeat;
+  mask:
+    linear-gradient(#000 0 0) top left / 100% 3px no-repeat,
+    linear-gradient(#000 0 0) bottom left / 100% 3px no-repeat,
+    linear-gradient(#000 0 0) top left / 3px 100% no-repeat,
+    linear-gradient(#000 0 0) top right / 3px 100% no-repeat;
+  animation: bulb-twinkle 1.4s steps(2) infinite;
+}
+@keyframes bulb-twinkle {
+  0%, 100% { opacity: 1; filter: drop-shadow(0 0 3px var(--marigold)); }
+  50%      { opacity: 0.55; filter: none; }
+}
+
+.stage__inner {
+  position: relative;
+  border-radius: 18px;
+  background: var(--ink-2);
+  padding: 48px 24px 36px;
+  text-align: center;
+  overflow: hidden;
+}
+
+.stage__hint {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: var(--muted);
+  margin: 0 0 32px;
+  transition: opacity 0.4s;
+}
+
+/* Cake, built from CSS shapes */
+.cake {
+  position: relative;
+  width: 220px;
+  height: 150px;
+  margin: 0 auto 28px;
+}
+.cake__candles {
+  position: absolute;
+  top: -46px;
+  left: 0; right: 0;
+  display: flex;
+  justify-content: center;
+  gap: 28px;
+}
+.candle {
+  position: relative;
+  width: 8px;
+  height: 34px;
+  background: repeating-linear-gradient(180deg, var(--coral) 0 6px, var(--cream) 6px 12px);
+  border-radius: 3px;
+  cursor: pointer;
+  transform-origin: bottom center;
+  transition: transform 0.3s;
+}
+.candle:active { transform: scale(0.94); }
+.flame {
+  position: absolute;
+  top: -16px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 10px;
+  height: 16px;
+  border-radius: 50% 50% 50% 50% / 65% 65% 35% 35%;
+  background: radial-gradient(circle at 50% 70%, #FFF6D6 0%, var(--marigold) 45%, var(--coral) 100%);
+  box-shadow: 0 0 12px var(--marigold), 0 0 22px rgba(255,193,69,0.5);
+  animation: flicker 0.9s ease-in-out infinite alternate;
+  transition: opacity 0.25s, transform 0.25s;
+}
+@keyframes flicker {
+  0%   { transform: translateX(-50%) scale(1) rotate(-2deg); }
+  100% { transform: translateX(-50%) scale(1.12) rotate(2deg); }
+}
+.candle[data-lit="false"] .flame {
+  opacity: 0;
+  transform: translateX(-50%) scale(0.2) translateY(6px);
+}
+.candle[data-lit="false"]::after {
+  content: "";
+  position: absolute;
+  top: -18px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 3px;
+  height: 8px;
+  border-radius: 2px;
+  background: var(--muted);
+  opacity: 0.5;
+  animation: smoke-rise 1.6s ease-out infinite;
+}
+@keyframes smoke-rise {
+  0%   { opacity: 0.5; transform: translate(-50%, 0) scaleX(1); }
+  100% { opacity: 0; transform: translate(-50%, -22px) scaleX(2.4); }
+}
+
+.cake__tier {
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  border-radius: 10px 10px 4px 4px;
+}
+.cake__tier--top {
+  top: 0;
+  width: 140px;
+  height: 56px;
+  background: var(--coral);
+}
+.cake__tier--top .drip {
+  position: absolute;
+  bottom: -10px;
+  width: 18px;
+  height: 20px;
+  border-radius: 0 0 50% 50%;
+  background: var(--coral);
+}
+.cake__tier--top .drip:nth-child(1) { left: 14px; }
+.cake__tier--top .drip:nth-child(2) { left: 60px; }
+.cake__tier--top .drip:nth-child(3) { left: 106px; }
+
+.cake__tier--bottom {
+  top: 50px;
+  width: 220px;
+  height: 66px;
+  background: var(--marigold);
+}
+.cake__tier--bottom .dot {
+  position: absolute;
+  top: 14px;
+  width: 10px; height: 10px;
+  border-radius: 50%;
+  background: var(--ink-2);
+  opacity: 0.25;
+}
+.cake__tier--bottom .dot:nth-child(1) { left: 30px; }
+.cake__tier--bottom .dot:nth-child(2) { left: 84px; }
+.cake__tier--bottom .dot:nth-child(3) { left: 138px; }
+.cake__tier--bottom .dot:nth-child(4) { left: 190px; }
+
+.cake__plate {
+  position: absolute;
+  bottom: -6px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 250px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--ink-3);
+}
+
+.ghost-btn {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  letter-spacing: 0.08em;
+  background: transparent;
+  border: 1px dashed rgba(253,246,236,0.3);
+  color: var(--cream);
+  padding: 10px 18px;
+  border-radius: 999px;
+  cursor: pointer;
+  transition: border-color 0.2s, color 0.2s;
+}
+.ghost-btn:hover { border-color: var(--mint); color: var(--mint); }
+
+/* ==========================================================================
+   Section heads (shared)
+   ========================================================================== */
+main { position: relative; z-index: 2; }
+
+section { max-width: 760px; margin: 0 auto; padding: 20px 24px 72px; }
+
+.section-head { text-align: center; margin-bottom: 36px; }
+.ticket-no {
+  display: inline-block;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.2em;
+  color: var(--muted);
+  border: 1px solid rgba(253,246,236,0.15);
+  padding: 3px 10px;
+  border-radius: 999px;
+  margin-bottom: 14px;
+}
+.section-head h2 {
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-style: italic;
+  font-size: clamp(1.6rem, 4vw, 2.2rem);
+  margin: 0 0 8px;
+  color: var(--marigold);
+}
+.section-head p { color: var(--muted); margin: 0; font-size: 14.5px; }
+
+/* ==========================================================================
+   Forms
+   ========================================================================== */
+.wish-form, .capsule-form {
+  background: var(--ink-2);
+  border: 1px solid rgba(253,246,236,0.08);
+  border-radius: var(--radius);
+  padding: 28px;
+  margin-bottom: 40px;
+}
+.form-row { margin-bottom: 16px; }
+.form-row label {
+  display: block;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin-bottom: 8px;
+}
+.form-row input[type="text"],
+.form-row input[type="date"],
+.form-row textarea {
+  width: 100%;
+  background: var(--ink);
+  border: 1px solid rgba(253,246,236,0.15);
+  color: var(--cream);
+  border-radius: 10px;
+  padding: 12px 14px;
+  font-family: var(--font-body);
+  font-size: 14.5px;
+  resize: vertical;
+  transition: border-color 0.2s;
+}
+.form-row input:focus,
+.form-row textarea:focus {
+  outline: none;
+  border-color: var(--marigold);
+}
+.form-row--file {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+.file-label {
+  margin: 0 !important;
+  cursor: pointer;
+  border: 1px dashed rgba(253,246,236,0.25);
+  padding: 10px 14px;
+  border-radius: 10px;
+  font-size: 13px !important;
+  text-transform: none !important;
+  letter-spacing: normal !important;
+}
+.form-row--file input[type="file"] { display: none; }
+.file-chosen { font-family: var(--font-mono); font-size: 12px; color: var(--mint); }
+
+.primary-btn {
+  font-family: var(--font-mono);
+  font-size: 13px;
+  letter-spacing: 0.05em;
+  background: var(--coral);
+  color: var(--ink);
+  border: none;
+  padding: 13px 26px;
+  border-radius: 999px;
+  cursor: pointer;
+  font-weight: 700;
+  transition: transform 0.15s, box-shadow 0.15s;
+}
+.primary-btn:hover { transform: translateY(-2px); box-shadow: 0 8px 20px rgba(255,111,145,0.35); }
+.primary-btn--seal { background: var(--mint); }
+.primary-btn--seal:hover { box-shadow: 0 8px 20px rgba(111,231,203,0.35); }
+
+/* ==========================================================================
+   Wish cards — ticket-stub styling
+   ========================================================================== */
+.wish-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(230px, 1fr));
+  gap: 20px;
+}
+.empty-note { color: var(--muted); font-size: 14px; text-align: center; grid-column: 1 / -1; }
+
+.wish-card {
+  position: relative;
+  background: var(--ink-2);
+  border-radius: 14px;
+  padding: 20px;
+  border: 1px solid rgba(253,246,236,0.08);
+}
+.wish-card__ticket-no {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--mint);
+  margin-bottom: 10px;
+}
+.wish-card__photo {
+  width: 100%;
+  height: 140px;
+  object-fit: cover;
+  border-radius: 10px;
+  margin-bottom: 12px;
+}
+.wish-card__message {
+  font-family: var(--font-display);
+  font-style: italic;
+  font-size: 15.5px;
+  line-height: 1.5;
+  margin: 0 0 14px;
+}
+.wish-card__footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.wish-card__name {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: var(--muted);
+}
+.like-btn {
+  background: transparent;
+  border: 1px solid rgba(253,246,236,0.15);
+  color: var(--coral);
+  border-radius: 999px;
+  padding: 6px 12px;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  transition: transform 0.15s, border-color 0.15s;
+}
+.like-btn:hover { border-color: var(--coral); transform: scale(1.05); }
+.like-btn.liked .like-icon { animation: pop 0.35s ease; }
+@keyframes pop { 0%{transform:scale(1);} 50%{transform:scale(1.4);} 100%{transform:scale(1);} }
+
+.wish-card__perforation {
+  position: absolute;
+  bottom: -1px; left: 14px; right: 14px;
+  height: 1px;
+  background-image: linear-gradient(90deg, rgba(253,246,236,0.25) 50%, transparent 50%);
+  background-size: 8px 1px;
+}
+
+/* ==========================================================================
+   Time capsule
+   ========================================================================== */
+.capsule-status { text-align: center; margin-bottom: 20px; }
+.capsule-sealed-note {
+  display: inline-block;
+  font-family: var(--font-mono);
+  font-size: 12.5px;
+  color: var(--muted);
+  border: 1px dashed rgba(253,246,236,0.2);
+  padding: 8px 16px;
+  border-radius: 999px;
+}
+.capsule-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(230px, 1fr));
+  gap: 20px;
+}
+.capsule-card {
+  background: var(--ink-2);
+  border: 1px solid rgba(111,231,203,0.25);
+  border-radius: 14px;
+  padding: 20px;
+}
+.capsule-card__stamp {
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  letter-spacing: 0.08em;
+  color: var(--mint);
+  margin-bottom: 10px;
+}
+.capsule-card__message {
+  font-family: var(--font-display);
+  font-style: italic;
+  font-size: 15px;
+  margin: 0 0 12px;
+}
+.capsule-card__name {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: var(--muted);
+}
+
+/* ==========================================================================
+   Footer
+   ========================================================================== */
+.site-footer {
+  position: relative;
+  z-index: 2;
+  padding: 30px 24px 50px;
+  text-align: center;
+}
+.site-footer p {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: var(--muted);
+  margin-top: 18px;
+}
+
+/* ==========================================================================
+   Focus visibility (accessibility floor)
+   ========================================================================== */
+button:focus-visible, input:focus-visible, textarea:focus-visible, a:focus-visible {
+  outline: 2px solid var(--marigold);
+  outline-offset: 2px;
+}
+
+/* ==========================================================================
+   Responsive
+   ========================================================================== */
+@media (max-width: 480px) {
+  .ticket-header { padding: 48px 16px 32px; }
+  .stage__inner { padding: 40px 16px 28px; }
+  section { padding: 16px 16px 56px; }
+  .cake { transform: scale(0.85); }
+}

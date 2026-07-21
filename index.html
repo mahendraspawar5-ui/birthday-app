@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Happy Birthday, {{ celebrant }}! 🎟️</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,wght@0,400;0,600;0,700;1,500&family=Poppins:wght@300;400;500;600&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+
+<canvas id="confetti-canvas"></canvas>
+
+<div class="balloons" aria-hidden="true">
+  <span class="balloon b1"></span>
+  <span class="balloon b2"></span>
+  <span class="balloon b3"></span>
+  <span class="balloon b4"></span>
+  <span class="balloon b5"></span>
+</div>
+
+<header class="ticket-header">
+  <div class="ticket-header__inner">
+    <div class="ticket-eyebrow">ADMIT ONE &middot; ALL-DAY PASS</div>
+    <h1 class="ticket-title">Happy Birthday,<br><span>{{ celebrant }}</span></h1>
+    <div class="ticket-sub">A day reserved just for you — {{ today }}</div>
+    <button id="theme-toggle" class="theme-toggle" aria-label="Toggle party lights">
+      <span class="theme-toggle__dot"></span> party lights
+    </button>
+  </div>
+  <div class="marquee-strip" aria-hidden="true"></div>
+</header>
+
+{% with messages = get_flashed_messages(with_categories=true) %}
+  {% if messages %}
+    <div class="flash-stack">
+      {% for category, msg in messages %}
+        <div class="flash flash--{{ category }}">{{ msg }}</div>
+      {% endfor %}
+    </div>
+  {% endif %}
+{% endwith %}
+
+<main>
+
+  <!-- CAKE / CANDLE STAGE -->
+  <section class="stage">
+    <div class="marquee-frame">
+      <div class="marquee-bulbs" aria-hidden="true"></div>
+      <div class="stage__inner">
+        <p class="stage__hint" id="stage-hint">Tap the candles to blow them out 🕯️</p>
+        <div id="cake" class="cake">
+          <div class="cake__candles">
+            <span class="candle" data-lit="true"><i class="flame"></i></span>
+            <span class="candle" data-lit="true"><i class="flame"></i></span>
+            <span class="candle" data-lit="true"><i class="flame"></i></span>
+          </div>
+          <div class="cake__tier cake__tier--top"><span class="drip"></span><span class="drip"></span><span class="drip"></span></div>
+          <div class="cake__tier cake__tier--bottom"><span class="dot"></span><span class="dot"></span><span class="dot"></span><span class="dot"></span></div>
+          <div class="cake__plate"></div>
+        </div>
+        <button id="play-tune" class="ghost-btn">🎵 Play the birthday tune</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- WISH BOARD -->
+  <section id="board" class="board">
+    <div class="section-head">
+      <span class="ticket-no">NO. 01</span>
+      <h2>The Wish Board</h2>
+      <p>Leave {{ celebrant }} a message — a photo is welcome, not required.</p>
+    </div>
+
+    <form class="wish-form" action="{{ url_for('add_wish') }}" method="post" enctype="multipart/form-data">
+      <div class="form-row">
+        <label for="name">Your name</label>
+        <input type="text" id="name" name="name" placeholder="Anonymous" maxlength="60">
+      </div>
+      <div class="form-row">
+        <label for="message">Your wish</label>
+        <textarea id="message" name="message" rows="3" maxlength="400" placeholder="Write something {{ celebrant }} will love reading..." required></textarea>
+      </div>
+      <div class="form-row form-row--file">
+        <label for="photo" class="file-label">📷 Add a photo (optional)</label>
+        <input type="file" id="photo" name="photo" accept="image/*">
+        <span id="file-chosen" class="file-chosen"></span>
+      </div>
+      <button type="submit" class="primary-btn">Post Wish 🎈</button>
+    </form>
+
+    <div class="wish-grid">
+      {% if wishes|length == 0 %}
+        <p class="empty-note">No wishes yet — be the first to write one above.</p>
+      {% endif %}
+      {% for w in wishes %}
+        <article class="wish-card">
+          <div class="wish-card__ticket-no">#{{ "%03d"|format(w['id']) }}</div>
+          {% if w['photo'] %}
+            <img class="wish-card__photo" src="{{ url_for('static', filename='uploads/' ~ w['photo']) }}" alt="Photo from {{ w['name'] }}">
+          {% endif %}
+          <p class="wish-card__message">&ldquo;{{ w['message'] }}&rdquo;</p>
+          <div class="wish-card__footer">
+            <span class="wish-card__name">— {{ w['name'] }}</span>
+            <button class="like-btn" data-id="{{ w['id'] }}">
+              <span class="like-icon">♥</span> <span class="like-count">{{ w['likes'] }}</span>
+            </button>
+          </div>
+          <div class="wish-card__perforation" aria-hidden="true"></div>
+        </article>
+      {% endfor %}
+    </div>
+  </section>
+
+  <!-- TIME CAPSULE -->
+  <section id="capsule" class="capsule">
+    <div class="section-head">
+      <span class="ticket-no">NO. 02</span>
+      <h2>The Time Capsule</h2>
+      <p>Seal a message that stays locked until a date you choose — perfect for next {{ celebrant }}'s birthday.</p>
+    </div>
+
+    <form class="capsule-form" action="{{ url_for('add_capsule') }}" method="post">
+      <div class="form-row">
+        <label for="cap-name">Your name</label>
+        <input type="text" id="cap-name" name="name" placeholder="Anonymous" maxlength="60">
+      </div>
+      <div class="form-row">
+        <label for="cap-message">Sealed message</label>
+        <textarea id="cap-message" name="message" rows="3" maxlength="400" placeholder="This won't be seen until the unlock date..." required></textarea>
+      </div>
+      <div class="form-row">
+        <label for="unlock_date">Unlock date</label>
+        <input type="date" id="unlock_date" name="unlock_date" value="{{ default_unlock_date }}" min="{{ today }}">
+      </div>
+      <button type="submit" class="primary-btn primary-btn--seal">Seal It 🔒</button>
+    </form>
+
+    <div class="capsule-status">
+      {% if sealed_count > 0 %}
+        <p class="capsule-sealed-note">🔒 {{ sealed_count }} capsule{{ 's' if sealed_count != 1 else '' }} still sealed, waiting for their date.</p>
+      {% endif %}
+    </div>
+
+    <div class="capsule-grid">
+      {% for c in unlocked_capsules %}
+        <article class="capsule-card">
+          <div class="capsule-card__stamp">UNLOCKED {{ c['unlock_date'] }}</div>
+          <p class="capsule-card__message">&ldquo;{{ c['message'] }}&rdquo;</p>
+          <span class="capsule-card__name">— {{ c['name'] }}</span>
+        </article>
+      {% endfor %}
+      {% if unlocked_capsules|length == 0 %}
+        <p class="empty-note">No capsules have unlocked yet — check back on the date!</p>
+      {% endif %}
+    </div>
+  </section>
+
+</main>
+
+<footer class="site-footer">
+  <div class="marquee-strip" aria-hidden="true"></div>
+  <p>Made with 🎈 for {{ celebrant }}'s big day.</p>
+</footer>
+
+<script src="{{ url_for('static', filename='js/main.js') }}"></script>
+</body>
+</html>
